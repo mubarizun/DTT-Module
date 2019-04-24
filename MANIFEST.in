@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include dtt_module *.css
+recursive-include dtt_module *.csv
+recursive-include dtt_module *.html
+recursive-include dtt_module *.ico
+recursive-include dtt_module *.js
+recursive-include dtt_module *.json
+recursive-include dtt_module *.md
+recursive-include dtt_module *.png
+recursive-include dtt_module *.py
+recursive-include dtt_module *.svg
+recursive-include dtt_module *.txt
+recursive-exclude dtt_module *.pyc
