@@ -10,7 +10,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "yellow"
 app_email = "info@kataba.id"
 app_license = "MIT"
-app_include_js = ["assets/dtt_module/js/company.js", "assets/dtt_module/js/sales_partner.js", "assets/dtt_module/js/sales_order.js", "assets/dtt_module/js/purchase_invoice.js", "assets/dtt_module/js/purchase_receipt.js", "assets/dtt_module/js/delivery_note.js", "assets/dtt_module/js/sales_invoice.js", "assets/dtt_module/js/kelengkapan_umrah.js", "assets/dtt_module/js/payment_entry.js", "assets/dtt_module/js/1utils.js", "assets/dtt_module/js/virtual_account.js", "assets/dtt_module/js/item.js"]
+app_include_js = ["assets/dtt_module/js/company.js", "assets/dtt_module/js/sales_partner.js", "assets/dtt_module/js/sales_order.js", "assets/dtt_module/js/purchase_invoice.js", "assets/dtt_module/js/purchase_receipt.js", "assets/dtt_module/js/delivery_note.js", "assets/dtt_module/js/sales_invoice.js", "assets/dtt_module/js/kelengkapan_umrah.js", "assets/dtt_module/js/payment_entry.js", "assets/dtt_module/js/1utils.js", "assets/dtt_module/js/virtual_account.js", "assets/dtt_module/js/item.js", "assets/dtt_module/js/item_umrah_hotel.js"]
 
 # Includes in <head>
 # ------------------

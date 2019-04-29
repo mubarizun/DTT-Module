@@ -5,6 +5,15 @@ const toggleUmrahSection = (frm) => {
 }
 
 frappe.ui.form.on("Item", {
+    setup: (frm) => {
+        frm.set_query("bandara_keberangkatan", function() {
+			return {
+				filters: [
+					["Item Umrah Kota","destinasi", "=", 0]
+				]
+			}
+		})
+    },
     onload: function(frm) {
         toggleUmrahSection(frm)
     },
