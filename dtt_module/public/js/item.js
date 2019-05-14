@@ -12,7 +12,14 @@ frappe.ui.form.on("Item", {
 					["Item Umrah Kota","destinasi", "=", 0]
 				]
 			}
-		})
+        })
+        frm.fields_dict['penerbangan'].grid.get_field("kota").get_query = function(doc, cdt, cdn) {
+            return {
+                filters: [
+                    ["Item Umrah Kota","destinasi", "=", 1]
+                ]
+            }
+        }
     },
     onload: function(frm) {
         toggleUmrahSection(frm)

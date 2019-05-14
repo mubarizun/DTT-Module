@@ -20,7 +20,7 @@ frappe.ui.form.on("Sales Invoice", {
 	on_submit: function(frm) {
 		if (frm.doc.mgs_total_commission > 0) {
 			frappe.call({
-				"method":"kataba.client.new_journal_entry",
+				"method":"dtt_module.client.new_journal_entry",
 				args: {
 					"doc": frm.doc
 				},

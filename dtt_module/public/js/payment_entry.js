@@ -4,7 +4,7 @@ function pe_changeAgainstPaymentEntry(frm){
 		if (references[i].reference_doctype == "Sales Order"){
 			var sql = "update `tabUmrah Ordered Item` set against_payment_entry='" + frm.doc.name + "'  where against_sales_order='" + references[i].reference_name + "';";
 			frappe.call({
-				"method": "kataba.client.run_sql",
+				"method": "dtt_module.client.run_sql",
 				args: {
 					"sql": sql
 				},

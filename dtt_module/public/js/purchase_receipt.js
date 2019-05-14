@@ -9,11 +9,10 @@ function setBilledReceiptAccount(frm) {
 			console.log(data.message.name);
 			console.log(data.message.supplier_link);
 			if (frm.doc.is_pnr == 1 && isSupplierInChildTableReceipt(data.message.supplier_link, frm.doc.supplier_name, frm.doc.company)){
-				console.log("Purchase Receipt")
-				console.log("A");
+				console.log("Purchase Receipt");
 				var sql = "update `tabGL Entry` set account='" + data.message.umrah_stock_received_but_not_billed_receive_account + "' where voucher_no='" + frm.doc.name + "' and account='" + data.message.stock_received_but_not_billed +"'"
 				frappe.call({
-					"method": "kataba.client.run_sql",
+					"method": "dtt_module.client.run_sql",
 					args: {
 						"sql": sql
 					}

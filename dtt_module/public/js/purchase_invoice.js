@@ -13,7 +13,7 @@ function setBilledInvoiceAccount(frm) {
 				console.log("TRUE PI");
                                 var sql = "update `tabGL Entry` set account='" + data.message.umrah_stock_received_but_not_billed_invoice_account + "' where voucher_no='" + frm.doc.name + "' and account='" + data.message.stock_received_but_not_billed + "'"
                                 frappe.call({
-                                        "method": "kataba.client.run_sql",
+                                        "method": "dtt_module.client.run_sql",
                                         args: {
                                                 "sql": sql
                                         }

@@ -3,7 +3,7 @@ function dn_changeDeliveryNoteOnKelengkapanUmrah(frm){
 	for (var i=0; i < items.length; i++){
 		var sql = "update `tabUmrah Ordered Item` set against_delivery_note='" + frm.doc.name + "'  where against_sales_order='" + items[i].againts_sales_order + "';"
 		frappe.call({
-        		"method": "kataba.client.run_sql",
+        		"method": "dtt_module.client.run_sql",
         		args: {
         			"sql": sql
         		},

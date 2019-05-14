@@ -8,27 +8,27 @@ function so_createKelengkapanUmrah(frm) {
 			// var sql = "INSERT INTO `tabKelengkapan Umrah` (name, sales_order, customer) VALUES ('KU-" + frm.doc.name + "-" + frm.doc.customer + "', '" + frm.doc.name + "', '" + frm.doc.customer + "');"
 			umrah_item_count += 1;
 			frappe.call({
-				"method": "kataba.client.create_kelengkapan_umrah",
+				"method": "dtt_module.client.create_kelengkapan_umrah",
 				args: {
 					"frm_name": frm.doc.name,
 					"customer": frm.doc.customer,
 					"count": umrah_item_count,
 					"item_code": items[i].item_code,
-			"item_name": items[i].item_name,
-			"grand_total": frm.doc.grand_total
+					"item_name": items[i].item_name,
+					"grand_total": frm.doc.grand_total
 				}
 			})
 			for (var j = 1; j < items[i].qty; j++) {
 				umrah_item_count += 1;
 				frappe.call({
-					"method": "kataba.client.create_kelengkapan_umrah",
+					"method": "dtt_module.client.create_kelengkapan_umrah",
 					args: {
 						"frm_name": frm.doc.name,
 						"count": umrah_item_count,
 						"item_code": items[i].item_code,
 						"item_name": items[i].item_name,
-			"customer": "",
-			"grand_total": frm.doc.grand_total
+						"customer": "",
+						"grand_total": frm.doc.grand_total
 					}
 				})
 				console.log("CALLED");
@@ -41,7 +41,7 @@ function so_cancelKelengkapanUmrah(frm) {
 	console.log("CANCELLED");
 	var sql = "update `tabKelengkapan Umrah` set status='Cancelled' where sales_order='" + frm.doc.name + "';"
 	frappe.call({
-		"method": "kataba.client.run_sql",
+		"method": "dtt_module.client.run_sql",
 		args: {
 			"sql": sql
 		},
@@ -55,7 +55,7 @@ function so_changeKelengkapanUmrah(frm) {
 
 	var sql = "update `tabKelengkapan Umrah` set status='Created', sales_order='" + frm.doc.name + "'  where sales_order='" + frm.doc.amended_from + "';"
 	frappe.call({
-		"method": "kataba.client.run_sql",
+		"method": "dtt_module.client.run_sql",
 		args: {
 			"sql": sql
 		},
@@ -64,7 +64,7 @@ function so_changeKelengkapanUmrah(frm) {
 
 	var sql1 = "update `tabUmrah Ordered Item` set against_sales_order='" + frm.doc.name + "'  where against_sales_order='" + frm.doc.amended_from + "';"
 	frappe.call({
-		"method": "kataba.client.run_sql",
+		"method": "dtt_module.client.run_sql",
 		args: {
 			"sql": sql1
 		},
@@ -134,7 +134,7 @@ function so_generateVirtualAccountNo(frm) {
 			date = date.substring(2);
 			newVA += date;
 
-			frappe.call({"method": "kataba.client.get_VA",
+			frappe.call({"method": "dtt_module.client.get_VA",
 				callback: function (d) {
 					var prefixes = [];
 					var idFound = false;
@@ -169,7 +169,7 @@ function so_generateVirtualAccountNo(frm) {
 					newVA += newRunningNumber;
 
 					frappe.call({
-						"method": "kataba.client.make_new_VA",
+						"method": "dtt_module.client.make_new_VA",
 						args: {
 							"VANO": newVA,
 							"docname": frm.doc.name
@@ -178,7 +178,7 @@ function so_generateVirtualAccountNo(frm) {
 							frm.set_value("virtual_account", make_new_va_data.message);
 
 							frappe.call({
-								"method": "kataba.client.update_VA_field",
+								"method": "dtt_module.client.update_VA_field",
 								args: {
 									"VANO": make_new_va_data.message,
 									"docname": frm.doc.name
@@ -197,10 +197,10 @@ function so_generateVirtualAccountNo(frm) {
 
 function so_deleteVirtualAccountNo(frm) {
 	frappe.call({
-		"method": "kataba.client.delete_VA",
+		"method": "dtt_module.client.delete_VA",
 		args: {
 			"VANO": frm.doc.virtual_account,
-		"docname": frm.doc.name
+			"docname": frm.doc.name
 		},
 		callback: function (data) {
 			console.log("Virtual Account deleted.");
@@ -210,7 +210,14 @@ function so_deleteVirtualAccountNo(frm) {
 
 frappe.ui.form.on("Sales Order", {
 	onload: function (frm) {
-		console.log("test");
+		if (frm.doc.sales_partner !== "" && frm.doc.status === "Draft") {
+			isCommissionsValid = setCommissionValues(frm);
+		}
+		
+		disableVirtualAccountField(100);
+	},
+
+	refresh: function (frm) {
 		if (frm.doc.sales_partner !== "" && frm.doc.status === "Draft") {
 			isCommissionsValid = setCommissionValues(frm);
 		}
@@ -231,12 +238,14 @@ frappe.ui.form.on("Sales Order", {
 	},
 
 	on_submit: function (frm) {
+		cur_frm.set_value("virtual_account", "")
 		// console.log(frm.doc.amended_from);
 		if (frm.doc.amended_from == null) {
 			so_createKelengkapanUmrah(frm);
 		} else {
 			so_changeKelengkapanUmrah(frm);
 		}
+
 		so_generateVirtualAccountNo(frm);
 	},
 
@@ -246,6 +255,7 @@ frappe.ui.form.on("Sales Order", {
 	},
 
 	validate: function (frm) {
+		cur_frm.set_value("virtual_account", "")
 		if (!isCommissionsValid) {
 			frappe.validated = false;
 			frappe.msgprint("Check your Items");
