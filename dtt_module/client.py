@@ -127,79 +127,111 @@ def new_journal_entry(doc):
 	b.submit()
 	return ({"item_1":a.name,"item_2":b.name})
 	
-@frappe.whitelist(allow_guest=True)
-def generate_new_virtual_account(company_name, project, items=[]):
-	import datetime
-	def getParentItemGroup(item_group_name):
+@frappe.whitelist()
+def submit_so(sales_order_name):
+	if sales_order_name != "":
+		return frappe.db.sql("update `tabSales Order` set docstatus = 1 where name='"+sales_order_name+"'")
+
+@frappe.whitelist()
+def add_virtual_account(sales_order_name):
+	def get_parent_item_group(item_group_name):
 		item_group = {}
 		parent = {}
+
 		for item_group_data in frappe.get_all("Item Group"):
 			if item_group_name == str(item_group_data.name):
 				item_group = frappe.get_doc("Item Group", item_group_data.name)
-		if item_group.parent_item_group == "Paket Umrah":
-			parent = item_group
-		else:
-			parent = getParentItemGroup(item_group.parent_item_group)
+		if item_group != {}:
+			if item_group.parent_item_group == "Paket Umrah":
+				parent = item_group
+			else:
+				parent = get_parent_item_group(item_group.parent_item_group)
+
 		return parent
 
 
-	new_va = ""
-	new_id = ""
-	newRunningNumber = ""
+	def get_so(sales_order_name):
+		sales_order = {}
+		for so in frappe.get_all("Sales Order"):
+			if str(sales_order_name) == str(so.name):
+				sales_order = frappe.get_doc("Sales Order", so.name)
 
-	va_setup = {}
-	for va_setup_data in frappe.get_all("VA Setup"):
-		if str(company_name) == str(va_setup_data.name):
-			va_setup = frappe.get_doc("VA Setup", va_setup_data.name)
+		return sales_order
 
-	new_va += str(va_setup.company_prefix)
+
+	def gen_va(so):
+		import datetime
+
+		new_va = ""
+		new_id = ""
+		newRunningNumber = ""
+
+		va_setup = {}
+		for va_setup_data in frappe.get_all("VA Setup"):
+			if str(so.company) == str(va_setup_data.name):
+				va_setup = frappe.get_doc("VA Setup", va_setup_data.name)
+
+		new_va += str(va_setup.company_prefix)
+
+		typeFound = False
+		for product_prefix in va_setup.product_prefix:
+			if product_prefix.document_type == "Project" and product_prefix.document_type_id == so.project and typeFound == False:
+				new_va += product_prefix.id
+				new_id += product_prefix.id
+				typeFound = True
+			elif product_prefix.document_type == "Item Group":
+				for item in so.items:
+					if product_prefix.document_type_id == get_parent_item_group(item.item_group) and typeFound == False:
+						new_va += product_prefix.id
+						new_id += product_prefix.id
+						typeFound = True
+			else:
+				new_id += "11"
+				new_va += "11"
+				typeFound = True
+		new_va += str(datetime.datetime.today().year)[2:]
+		
+		va_list = get_VA()
+		prefixes = []
+
+		for va in va_list:
+			va = va[0]
+
+			id = va[4:6]
+			running_number = int(va[10:])
+			prefixes.append({
+				"id": id,
+				"running_number": running_number
+			})
+
+		prefixes = sorted(prefixes, key = lambda p: p["running_number"], reverse=True)
+
+		new_running_number = ""
+		idFound = False
+
+		for prefix in prefixes:
+			if prefix["id"] == new_id:
+				rn = int(prefix["running_number"])+1
+				new_running_number = str(rn).zfill(8)
+				idFound = True
+				break
+
+		if len(va_list) == 0 or idFound == False:
+			new_running_number = str(1).zfill(8)
+
+		new_va += new_running_number
+
+		return new_va
+
+	so = get_so(sales_order_name)
 	
-	typeFound = False
-	for product_prefix in va_setup.product_prefix:
-		if product_prefix.document_type == "Project" and product_prefix.document_type_id == project and typeFound == False:
-			new_va += product_prefix.id
-			new_id += product_prefix.id
-			typeFound = True
-		elif product_prefix.document_type == "Item Group":
-			for item in items:
-				if product_prefix.document_type_id == getParentItemGroup(item["item_group"]) and typeFound == False:
-					new_va += product_prefix.id
-					new_id += product_prefix.id
-					typeFound = True
+	if so.docstatus == 1:
+		if so.virtual_account == "" or so.virtual_account == None:
+			va = gen_va(so)
+			make_new_VA(va, so.name)
+			update_VA_field(va, so.name)
+			frappe.msgprint(str("New virtual account has been added to sales order "+so.name), raise_exception=False)
 		else:
-			new_id += "11"
-			new_va += "11"
-			typeFound = True
-	new_va += str(datetime.datetime.today().year)[2:]
-	
-	va_list = get_VA()
-	prefixes = []
-
-	for va in va_list:
-		va = va[0]
-
-		id = va[4:6]
-		running_number = int(va[10:])
-		prefixes.append({
-			"id": id,
-			"running_number": running_number
-		})
-
-	prefixes = sorted(prefixes, key = lambda p: p["running_number"], reverse=True)
-
-	new_running_number = ""
-	idFound = False
-
-	for prefix in prefixes:
-		if prefix["id"] == new_id:
-			rn = int(prefix["running_number"])+1
-			new_running_number = str(rn).zfill(8)
-			idFound = True
-			break
-
-	if len(va_list) == 0 or idFound == False:
-		new_running_number = str(1).zfill(8)
-
-	new_va += new_running_number
-
-	return new_va
+			frappe.msgprint("Sales order has virtual account already", raise_exception=True)
+	else:
+		frappe.msgprint("Submit sales order first", raise_exception=True)

@@ -36,20 +36,23 @@ const setCommissionValues = frm => { //Sales invoice, sales order, delivery note
 						agent_commission_rate += itemGroupCommissions.agent_commission_rate*item.qty;
 						territory_commission_rate += itemGroupCommissions.territory_commission_rate;
 					} else {
-						frappe.msgprint("Commission Rate not found in Item or Item Group. error item: "+item.item_name);
+						// frappe.msgprint("Commission Rate not found in Item or Item Group. error item: "+item.item_name);
+						console.log("Commission Rate not found in Item or Item Group. error item: "+item.item_name);
 					}
 				}
 			// }
 		});
 
-		console.log("setCommissionValues", agent_commission_rate, territory_commission_rate);
-
 		if (agent_commission_rate != 0 && territory_commission_rate != 0) {
-			frm.set_value("agent_commission_rate", agent_commission_rate);
-			frm.set_value("territory_commission_rate", territory_commission_rate);
-			frm.set_value("mgs_total_commission", agent_commission_rate + territory_commission_rate);
-			return true;
+			if (frm.doc.agent_commission_rate !== agent_commission_rate || frm.doc.territory_commission_rate !== territory_commission_rate) {
+				frm.set_value("agent_commission_rate", agent_commission_rate);
+				frm.set_value("territory_commission_rate", territory_commission_rate);
+				frm.set_value("mgs_total_commission", agent_commission_rate + territory_commission_rate);
+				console.log("setCommissionValues", agent_commission_rate, territory_commission_rate);
+				return true;
+			}
 		} else {
+			console.log("Zero")
 			// frm.set_value("sales_partner", "");
 			// return false;
 			return true
@@ -58,7 +61,7 @@ const setCommissionValues = frm => { //Sales invoice, sales order, delivery note
 	return true
 }
 
-const getParentItemGroup = itemGroup => { //Sales invoice, sales order, delivery note
+const getParentItemGroup = (itemGroup, company) => { //Sales invoice, sales order, delivery note
 	let parent;
 	if (itemGroup !== "Paket Umrah") {
 		frappe.call({
@@ -68,12 +71,32 @@ const getParentItemGroup = itemGroup => { //Sales invoice, sales order, delivery
 				"filters": { 'name': itemGroup }
 			},
 			async: false,
-			callback: function (data) {
-				if (data.message.parent_item_group === "Paket Umrah") {
-					parent = itemGroup;
-				}else{
-					parent = getParentItemGroup(data.message.parent_item_group);
-				}
+			callback: function (dataItemGroup) {
+				frappe.call({
+					"method": "frappe.client.get",
+					args: {
+						"doctype": "Company",
+						"filters": { 'name': company }
+					},
+					async: false,
+					callback: function (dataCompany) {
+						frappe.call({
+							"method": "frappe.client.get",
+							args: {
+								"doctype": "Item Group",
+								"filters": { 'name': dataItemGroup.message.parent_item_group }
+							},
+							async: false,
+							callback: function (dataItemGroup2) {
+								if (dataItemGroup2.message.parent_item_group === dataCompany.message.umrah_item_group) {
+									parent = itemGroup;
+								}else{
+									parent = getParentItemGroup(dataItemGroup.message.parent_item_group, company);
+								}
+							}
+						});
+					}
+				});
 			}
 		});
 	}

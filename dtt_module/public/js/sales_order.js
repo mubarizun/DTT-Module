@@ -71,7 +71,6 @@ function so_changeKelengkapanUmrah(frm) {
 		async: false
 	})
 
-
 	console.log("AMEND OK");
 }
 
@@ -95,6 +94,7 @@ function so_generateVirtualAccountNo(frm) {
 			newVA += data.message.company_prefix
 			var typeFound = false;
 			productPrefix = data.message.product_prefix;
+
 			function comparePrioritas(a,b) {
 				if (a.prioritas < b.prioritas)
 					return -1;
@@ -113,7 +113,9 @@ function so_generateVirtualAccountNo(frm) {
 					typeFound = true;
 				}else if (pp.document_type === "Item Group") {
 					for (var j = 0; j < frm.doc.items.length; j++) {
-						if (pp.document_type_id === getParentItemGroup(frm.doc.items[j].item_group) && !typeFound){
+						if (pp.document_type_id === getParentItemGroup(frm.doc.items[j].item_group, frm.doc.company) && !typeFound){
+							console.info("product prefix:", pp.document_type_id)
+							console.info("item parent: ", getParentItemGroup(frm.doc.items[j].item_group, frm.doc.company))
 							newVA += pp.id;
 							newID += pp.id;
 							typeFound = true;
@@ -210,7 +212,7 @@ function so_deleteVirtualAccountNo(frm) {
 
 frappe.ui.form.on("Sales Order", {
 	onload: function (frm) {
-		if (frm.doc.sales_partner !== "" && frm.doc.status === "Draft") {
+		if (frm.doc.status === "Draft") {
 			isCommissionsValid = setCommissionValues(frm);
 		}
 		
@@ -218,7 +220,7 @@ frappe.ui.form.on("Sales Order", {
 	},
 
 	refresh: function (frm) {
-		if (frm.doc.sales_partner !== "" && frm.doc.status === "Draft") {
+		if (frm.doc.status === "Draft") {
 			isCommissionsValid = setCommissionValues(frm);
 		}
 		
@@ -226,15 +228,11 @@ frappe.ui.form.on("Sales Order", {
 	},
 
 	sales_partner: function (frm) {
-		if (frm.doc.sales_partner != null) {
-			isCommissionsValid = setCommissionValues(frm);
-		}
+		isCommissionsValid = setCommissionValues(frm);
 	},
 
 	items: function (frm) {
-		if (frm.doc.sales_partner != null || frm.doc.sales_partner !== "") {
-			isCommissionsValid = setCommissionValues(frm);
-		}
+		isCommissionsValid = setCommissionValues(frm);
 	},
 
 	on_submit: function (frm) {
@@ -261,4 +259,14 @@ frappe.ui.form.on("Sales Order", {
 			frappe.msgprint("Check your Items");
 		}
 	}
+});
+
+frappe.ui.form.on('Sales Order Item', {
+	items_add: function (frm) {
+		isCommissionsValid = setCommissionValues(frm);
+	},
+
+	items_remove: function (frm) {
+		isCommissionsValid = setCommissionValues(frm);
+	},
 });
